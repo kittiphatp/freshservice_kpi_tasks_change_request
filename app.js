@@ -288,6 +288,13 @@ async function getAllTasks(ticket_id_arr, domain, requestOptions) {
                             task_completed_arr[idx]['completed_duration_hour']   = hours
                             task_completed_arr[idx]['completed_duration_minute'] = minutes
 
+                            // ตรวจสอบ comply จาก completed duration
+                            if (days > 0 || hours > 0 || minutes > 0) {
+                                task_completed_arr[idx]['comply'] = 'NC'
+                            } else {
+                                task_completed_arr[idx]['comply'] = 'C'
+                            }
+
                         }
                         
                     }
@@ -409,7 +416,7 @@ async function generateReport(list) {
                     <td>${i.local_created_at}</td>
                     <td>${i.local_closed_at}</td>
                     <td>${i.local_due_date}</td>
-                    <td></td>
+                    <td>${i.comply}</td>
                     <td>${i.completed_duration_day}</td>
                     <td>${i.completed_duration_hour}</td>
                     <td>${i.completed_duration_minute}</td>
