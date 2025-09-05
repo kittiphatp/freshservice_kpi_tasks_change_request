@@ -63,7 +63,15 @@ btnFetchReport.addEventListener('click', async () => {
                     4: "Urgent"
                 }
 
+                const olaMap = {
+                    1: "14 Days",
+                    2: "7 Days",
+                    3: "72 Hrs",
+                    4: "24 Hrs"
+                }
+
                 ticketObj['parent_ticket_priority_value'] = priorityMap[item.priority]
+                ticketObj['parent_ticket_ola']            = olaMap[item.priority]
                 
                 ticketId_arr.push(ticketObj)
             })
@@ -188,6 +196,7 @@ async function getAllTasks(ticket_id_arr, domain, requestOptions) {
             parent_ticket_id,
             parent_ticket_priority,
             parent_ticket_priority_value,
+            parent_ticket_ola,
             parent_created_at
         } = item
         
@@ -215,6 +224,7 @@ async function getAllTasks(ticket_id_arr, domain, requestOptions) {
                             task_completed_arr[idx]['parent_ticket_id']             = parent_ticket_id;
                             task_completed_arr[idx]['parent_ticket_priority']       = parent_ticket_priority;
                             task_completed_arr[idx]['parent_ticket_priority_value'] = parent_ticket_priority_value;
+                            task_completed_arr[idx]['parent_ticket_ola']            = parent_ticket_ola;
                             task_completed_arr[idx]['local_parent_created_at']      = convertLocalFormat(parent_created_at);
 
                             // เพิ่ม local date time
@@ -234,13 +244,10 @@ async function getAllTasks(ticket_id_arr, domain, requestOptions) {
                                 const dataAgentObj  = await resultAgent.agent;
       
                                 const agentName     = await dataAgentObj.first_name + ' ' + dataAgentObj.last_name
-                                const agentTeam     = await dataAgentObj.custom_fields.team;
 
                                 task_completed_arr[idx]['agent_value'] = agentName
-                                task_completed_arr[idx]['agent_team']  = agentTeam
                             } else {
                                 task_completed_arr[idx]['agent_value'] = null
-                                task_completed_arr[idx]['agent_team']  = null
                             }
 
                             // หาชื่อ group
@@ -391,9 +398,10 @@ async function generateReport(list) {
             ticket_row += `
                 <tr>
                     <td>${i.agent_value || ''}</td>
-                    <td>${i.agent_team || ''}</td>
+                    <td>${i.group_value || ''}</td>
                     <td>${i.parent_ticket_id} (${i.id})</td>
                     <td>${i.parent_ticket_priority_value}</td>
+                    <td>${i.parent_ticket_ola}</td>
                     <td>${i.local_parent_created_at}</td>
                     <td>${i.title}</td>
                     <td>${i.local_planned_start_date}</td>
@@ -414,10 +422,11 @@ async function generateReport(list) {
         <table>
             <thead>
                 <tr>
-                    <th rowspan="2">Agent Name</th>
-                    <th rowspan="2">Team</th>
+                    <th rowspan="2">Task Owner</th>
+                    <th rowspan="2">Agent Group</th>
                     <th rowspan="2">เลขที่ Change (task id)</th>
                     <th rowspan="2">Priority Change</th>
+                    <th rowspan="2">OLA Complete within (Hardcode)</th>
                     <th rowspan="2">Report Date</th>
                     <th rowspan="2">Summary</th>
                     <th rowspan="2">Target Start</th>

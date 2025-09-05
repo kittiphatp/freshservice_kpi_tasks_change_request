@@ -117,15 +117,6 @@ button:disabled {
 
 
 
-
-
-
-
-
-
-
-
-
 /* table ของ activity log */
   table {
     width: 100%;
@@ -146,6 +137,6 @@ button:disabled {
     font-size: 9px;
   }
 
-  th:nth-child(2),  td:nth-child(2)  { width: 80px; }
-  th:nth-child(3),  td:nth-child(3)  { width: 50px; }
-  th:nth-child(4),  td:nth-child(4)  { width: 150px;}
+  table tbody tr:hover {
+  background: #f5f7ff;      /* สีไฮไลท์ */
+}
