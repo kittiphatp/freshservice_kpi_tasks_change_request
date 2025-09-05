@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPI OF TASKS IN CHANGE REQUEST</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="ctn-header">
+        <div>
+            <h1 >KPI of Tasks in Change request</h1>
+            <div class="dev-by">version: 1.0.0 | Dev by Kittiphat Pisuittiporn</div>
+        </div>
+        
+        <img src='gable_logo.png' height="55px">
+    </div>
+
+    <div class="ctn-auth">
+
+        <div class="domain">
+            <label for="domain">Domain </label>
+            <input type="text" name="domain" id="domain" placeholder="Enter Domain">
+        </div>
+        <div class="authentication">
+            <label for="authToken">🔒Auth Token </label>
+            <input type="password" name="authToken" id="authToken" placeholder="Enter Auth Token">
+            
+        </div>
+
+    </div>
+
+    <div class="ctn-controls">
+
+        <div class="ticketType">
+            <label for="ticketType">Select Ticket Type</label>
+            <select id="ticketType" name="ticketType">
+                <option value="changes">Change Ticket</option>
+                <!-- <option value="tickets">SR/INC Ticket</option> -->
+            </select>
+        </div>
+
+        <div class="periodChoice">
+            <label for="periodChoice">Select Period</label>
+            <select id="periodChoice" name="periodChoice">
+                <option value="lastWeek">Last Week</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="lastYear">Last Year</option>
+                <option value="last2Year">Last 2 Years</option>
+                <option value="last3Year">Last 3 Years</option>
+                <option value="specifyRange">Sepcify Range</option>
+            </select>
+        </div>
+
+        <div class="dateRange">
+            <div class="from-date">
+                <label for="fromDate">From Date </label>
+                <input type="date" name="fromDate" id="fromDate">
+            </div>
+            <div class="to-date">
+                <label for="toDate">To Date </label>
+                <input type="date" name="toDate" id="toDate">
+            </div>
+        </div>
+    </div>
+
+    <div class="ctn-action">
+        <button id="fetchReport">🔍 Search</button>
+        <button id="printReport">🖨️ Print</button>
+    </div>
+
+    <div class="ctn-loading">
+        <div id="loader"></div>
+    </div>
+    <div class="ctn-report"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
