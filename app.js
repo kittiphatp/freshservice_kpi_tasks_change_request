@@ -29,6 +29,9 @@ const btnFetchReport = document.querySelector('#fetchReport')
 
 btnFetchReport.addEventListener('click', async () => {
 
+    // Clear Report
+    document.querySelector('.ctn-report').innerHTML = ''
+
     // Validate inputs
     const isValidDomain    = document.querySelector('#domain')   .value !== '';
     const isValidAuthToken = document.querySelector('#authToken').value !== '';
@@ -75,13 +78,26 @@ btnFetchReport.addEventListener('click', async () => {
                 
                 ticketId_arr.push(ticketObj)
             })
-        }
+        
 
         // console.log(ticketId_arr)
 
         let taskList = await getAllTasks(ticketId_arr, domain, requestOptions)
-        // เรียง agent_id จาก น้อยไปมาก
-        taskList.sort((a, b) => a.agent_id - b.agent_id);
+        // เรียง group_id จาก น้อยไปมาก
+        taskList.sort((a, b) => {
+            // sort ตาม group_id ก่อน
+            if (a.group_id !== b.group_id) {
+                return a.group_id - b.group_id;
+            }
+
+            // ถ้า group_id เท่ากัน sort ต่อด้วย agent_id
+            if (a.agent_id !== b.agent_id) {
+                return a.agent_id - b.agent_id;
+            }
+
+            // ถ้า agent_id เท่ากัน sort ต่อด้วย ticket_id
+            return a.ticket_id - b.ticket_id;
+        });
         console.log(taskList)
         
         // สร้าง report
@@ -89,6 +105,11 @@ btnFetchReport.addEventListener('click', async () => {
 
         // ลบข้อความ loading
         loader.innerHTML = ''
+
+        } else {
+            // แจ้งข้อความไม่พบข้อมูล
+            loader.innerHTML = 'ไม่พบข้อมูล'
+        }
 
     }
 
@@ -130,7 +151,7 @@ function getAuth() {
 }
 
 // API GET TICKET LIST
-async function getAllTickets(ticket_type,from_date, to_date, domain, requestOptions) {
+async function getAllTickets(ticket_type, from_date, to_date, domain, requestOptions) {
     let page = 1;
     let hasTickets = true;
     let list = [];
@@ -399,13 +420,89 @@ async function generateReport(list) {
     let report = document.querySelector('.ctn-report')
 
     let ticket_row = ''
+    let summary_row = ''
+    let table_layout = ''
+
+    report.innerHTML += `<div style="margin-top: 25px; background-color: #d1fff0ff;">${list[0].group_value || 'no assign group'}</div>`
 
     if (list.length > 0) {
-        list.forEach((i) => {
+
+        list.forEach((i, idx) => {            
+            
+            const prev_idx = idx === 0 ? 0 : idx - 1
+
+            if (i.group_value !== list[prev_idx].group_value || i.agent_value !== list[prev_idx].agent_value) {
+
+                // คำนวนจำนวนสำหรับบรรทัดสรุป
+                const summary_list = list.filter((task) => task.group_value === list[prev_idx].group_value && task.agent_value === list[prev_idx].agent_value)
+                const count_all = summary_list.length
+                const count_c = summary_list.filter((c) => c.comply === "C").length
+                const count_nc = summary_list.filter((c) => c.comply === "NC").length
+
+                const percent_c = count_all > 0 ? ((count_c * 100) / count_all).toFixed(2) : 0;
+                const percent_nc = count_all > 0 ? ((count_nc * 100) / count_all).toFixed(2) : 0;
+
+                // เพิ่มบรรทัดสรุป
+                summary_row = `
+                    <tr>
+                        <td>รวม ${count_all} เรื่อง</td>
+                        <td colspan="2">ดำเนินการตามกำหนด ${count_c} เรื่อง</td>
+                        <td colspan="11">คิดเป็น ${percent_c} %</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td colspan="2">ดำเนินการไม่ตามกำหนด ${count_nc} เรื่อง</td>
+                        <td colspan="11">คิดเป็น ${percent_nc} %</td>
+                    </tr>
+                `
+
+                table_layout = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Agent Group</th>
+                                <th rowspan="2">Task Owner</th>
+                                <th rowspan="2">เลขที่ Change (task id)</th>
+                                <th rowspan="2">Priority Change</th>
+                                <th rowspan="2">OLA Complete within (Hardcode)</th>
+                                <th rowspan="2">Report Date</th>
+                                <th rowspan="2">Summary</th>
+                                <th rowspan="2">Target Start</th>
+                                <th rowspan="2">Target Finish</th>
+                                <th rowspan="2">Actual Start</th>
+                                <th rowspan="2">Actual Finish</th>
+                                <th rowspan="2">Due Date</th>
+                                <th rowspan="2">Comply</th>
+                                <th colspan="3">ระยะเวลาดำเนินการ</th>
+                            </tr>
+                            <tr>
+                                <th>วัน</th>
+                                <th>ชั่วโมง</th>
+                                <th>นาที</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        ${ticket_row}                        
+                        </tbody>
+                        <tfoot>
+                        ${summary_row}
+                        </tfoot>
+                    </table>
+                `
+                // ออก ตาราง
+                report.innerHTML += `${table_layout}`                
+
+                // print ชื่อ group ใหม่
+                report.innerHTML += `<div style="margin-top: 25px; background-color: #d1fff0ff;">${i.group_value || 'no assign group'}</div>`
+
+                // ล้าง row ใน table
+                ticket_row = ''
+            }
+
             ticket_row += `
                 <tr>
-                    <td>${i.agent_value || ''}</td>
                     <td>${i.group_value || ''}</td>
+                    <td>${i.agent_value || ''}</td>
                     <td>${i.parent_ticket_id} (${i.id})</td>
                     <td>${i.parent_ticket_priority_value}</td>
                     <td>${i.parent_ticket_ola}</td>
@@ -422,40 +519,144 @@ async function generateReport(list) {
                     <td>${i.completed_duration_minute}</td>
                 </tr>
             `
+
+            // record ศุดท้าย
+            if (idx + 1 === list.length) {
+
+                // คำนวนจำนวนสำหรับบรรทัดสรุป
+                const summary_list = list.filter((task) => task.group_value === list[idx].group_value && task.agent_value === list[idx].agent_value)
+                const count_all = summary_list.length
+                const count_c = summary_list.filter((c) => c.comply === "C").length
+                const count_nc = summary_list.filter((c) => c.comply === "NC").length
+
+                const percent_c = count_all > 0 ? ((count_c * 100) / count_all).toFixed(2) : 0;
+                const percent_nc = count_all > 0 ? ((count_nc * 100) / count_all).toFixed(2) : 0;
+
+                // เพิ่มบรรทัดสรุป
+                summary_row = `
+                    <tr>
+                        <td>รวม ${count_all} เรื่อง</td>
+                        <td colspan="2">ดำเนินการตามกำหนด ${count_c} เรื่อง</td>
+                        <td colspan="11">คิดเป็น ${percent_c} %</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td colspan="2">ดำเนินการไม่ตามกำหนด ${count_nc} เรื่อง</td>
+                        <td colspan="11">คิดเป็น ${percent_nc} %</td>
+                    </tr>
+                `
+
+                table_layout = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Agent Group</th>
+                                <th rowspan="2">Task Owner</th>
+                                <th rowspan="2">เลขที่ Change (task id)</th>
+                                <th rowspan="2">Priority Change</th>
+                                <th rowspan="2">OLA Complete within (Hardcode)</th>
+                                <th rowspan="2">Report Date</th>
+                                <th rowspan="2">Summary</th>
+                                <th rowspan="2">Target Start</th>
+                                <th rowspan="2">Target Finish</th>
+                                <th rowspan="2">Actual Start</th>
+                                <th rowspan="2">Actual Finish</th>
+                                <th rowspan="2">Due Date</th>
+                                <th rowspan="2">Comply</th>
+                                <th colspan="3">ระยะเวลาดำเนินการ</th>
+                            </tr>
+                            <tr>
+                                <th>วัน</th>
+                                <th>ชั่วโมง</th>
+                                <th>นาที</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        ${ticket_row}
+                        </tbody>
+                        <tfoot>
+                        ${summary_row}
+                        </tfoot>
+                    </table>
+                `
+                // ออก ตาราง
+                report.innerHTML += `${table_layout}`
+
+            }
+
         })
-    }
 
-    let table_layout = `
-        <table>
-            <thead>
-                <tr>
-                    <th rowspan="2">Task Owner</th>
-                    <th rowspan="2">Agent Group</th>
-                    <th rowspan="2">เลขที่ Change (task id)</th>
-                    <th rowspan="2">Priority Change</th>
-                    <th rowspan="2">OLA Complete within (Hardcode)</th>
-                    <th rowspan="2">Report Date</th>
-                    <th rowspan="2">Summary</th>
-                    <th rowspan="2">Target Start</th>
-                    <th rowspan="2">Target Finish</th>
-                    <th rowspan="2">Actual Start</th>
-                    <th rowspan="2">Actual Finish</th>
-                    <th rowspan="2">Due Date</th>
-                    <th rowspan="2">Comply</th>
-                    <th colspan="3">ระยะเวลาดำเนินการ</th>
-                </tr>
-                <tr>
-                    <th>วัน</th>
-                    <th>ชั่วโมง</th>
-                    <th>นาที</th>
-                </tr>
-            </thead>
-            <tbody>
-            ${ticket_row}
-            </tbody>
-        </table>
-    `
-
-    // ออก report
-      report.innerHTML = `${table_layout}`
+    }    
 }
+
+
+
+
+
+
+// GENERATE REPORT (BACKUP)
+// async function generateReport(list) {
+//     let report = document.querySelector('.ctn-report')
+
+//     let ticket_row = ''
+
+//     if (list.length > 0) {
+//         list.forEach((i) => {
+            
+//             ticket_row += `
+//                 <tr>
+//                     <td>${i.group_value || ''}</td>
+//                     <td>${i.agent_value || ''}</td>
+//                     <td>${i.parent_ticket_id} (${i.id})</td>
+//                     <td>${i.parent_ticket_priority_value}</td>
+//                     <td>${i.parent_ticket_ola}</td>
+//                     <td>${i.local_parent_created_at}</td>
+//                     <td>${i.title}</td>
+//                     <td>${i.local_planned_start_date}</td>
+//                     <td>${i.local_planned_end_date}</td>
+//                     <td>${i.local_created_at}</td>
+//                     <td>${i.local_closed_at}</td>
+//                     <td>${i.local_due_date}</td>
+//                     <td>${i.comply}</td>
+//                     <td>${i.completed_duration_day}</td>
+//                     <td>${i.completed_duration_hour}</td>
+//                     <td>${i.completed_duration_minute}</td>
+//                 </tr>
+//             `
+//         })
+//     }
+
+//     let table_layout = `
+//         <table>
+//             <thead>
+//                 <tr>
+//                     <th rowspan="2">Agent Group</th>
+//                     <th rowspan="2">Task Owner</th>
+//                     <th rowspan="2">เลขที่ Change (task id)</th>
+//                     <th rowspan="2">Priority Change</th>
+//                     <th rowspan="2">OLA Complete within (Hardcode)</th>
+//                     <th rowspan="2">Report Date</th>
+//                     <th rowspan="2">Summary</th>
+//                     <th rowspan="2">Target Start</th>
+//                     <th rowspan="2">Target Finish</th>
+//                     <th rowspan="2">Actual Start</th>
+//                     <th rowspan="2">Actual Finish</th>
+//                     <th rowspan="2">Due Date</th>
+//                     <th rowspan="2">Comply</th>
+//                     <th colspan="3">ระยะเวลาดำเนินการ</th>
+//                 </tr>
+//                 <tr>
+//                     <th>วัน</th>
+//                     <th>ชั่วโมง</th>
+//                     <th>นาที</th>
+//                 </tr>
+//             </thead>
+//             <tbody>
+//             ${ticket_row}
+//             </tbody>
+//         </table>
+//     `
+
+//     // ออก report
+//     report.innerHTML += `${table_layout}`
+// }

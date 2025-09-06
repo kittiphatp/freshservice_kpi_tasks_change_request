@@ -118,25 +118,28 @@ button:disabled {
 
 
 /* table ของ activity log */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    border: 0.5px solid #ccc;
-  }
-  th {
-    background-color: #333;
-    color: white;
-  }
+table {
+width: 100%;
+border-collapse: collapse;
+margin-top: 10px;
+}
+th {
+background-color: #333;
+color: white;
+}
 
-  th, td {
-    width: 0px;
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-    font-size: 9px;
-  }
+th, td {
+width: 0px;
+border: 0.5px solid #ccc;
+padding: 8px;
+text-align: left;
+font-size: 12px;
+}
 
-  table tbody tr:hover {
-  background: #f5f7ff;      /* สีไฮไลท์ */
+table tbody tr:hover {
+background: #f5f7ff;      /* สีไฮไลท์ */
+}
+
+table tfoot td {
+    border: none
 }
